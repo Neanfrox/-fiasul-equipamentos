@@ -1190,6 +1190,10 @@
                         <input type="text" id="nome-funcionario" placeholder="Nome completo" required="">
                     </div>
                     <div class="form-group">
+                        <label for="matricula-funcionario">Matrícula *</label>
+                        <input type="text" id="matricula-funcionario" placeholder="Matrícula" required="">
+                    </div>
+                    <div class="form-group">
                         <label for="funcao-funcionario">Função *</label>
                         <input type="text" id="funcao-funcionario" placeholder="Função" required="">
                     </div>
@@ -1400,6 +1404,10 @@
                 <div class="form-group">
                     <label for="edit-nome-funcionario">Nome completo</label>
                     <input type="text" id="edit-nome-funcionario" placeholder="Nome completo">
+                </div>
+                <div class="form-group">
+                    <label for="edit-matricula-funcionario">Matrícula</label>
+                    <input type="text" id="edit-matricula-funcionario" placeholder="Matrícula">
                 </div>
                 <div class="form-group">
                     <label for="edit-funcao-funcionario">Função</label>
@@ -1991,18 +1999,25 @@
 
         function cadastrarFuncionario() {
             const nome = document.getElementById('nome-funcionario').value.trim();
+            const matricula = document.getElementById('matricula-funcionario').value.trim();
             const funcao = document.getElementById('funcao-funcionario').value.trim();
             const fotoInput = document.getElementById('foto-funcionario');
 
-            if (!nome || !funcao) {
+            if (!nome || !matricula || !funcao) {
                 mostrarNotificacao('Preencha todos os campos obrigatórios!', 'error');
+                return;
+            }
+
+            const matriculaExiste = funcionarios.some(func => func.matricula === matricula);
+            if (matriculaExiste) {
+                mostrarNotificacao('Já existe um funcionário cadastrado com essa matrícula!', 'error');
                 return;
             }
 
             const funcionario = {
                 id: Date.now(),
                 nome: nome,
-                matricula: 'ID-' + Date.now(),
+                matricula: matricula,
                 funcao: funcao,
                 foto: null,
                 dataCadastro: new Date().toISOString()
@@ -2057,6 +2072,7 @@
 
         function limparFormularioFuncionario() {
             document.getElementById('nome-funcionario').value = '';
+            document.getElementById('matricula-funcionario').value = '';
             document.getElementById('funcao-funcionario').value = '';
             document.getElementById('foto-funcionario').value = '';
             document.getElementById('preview-funcionario').innerHTML = '<span><i class="fas fa-image"></i> Prévia da foto aparecerá aqui</span>';
@@ -2067,6 +2083,7 @@
             
             if (funcionarioEditando) {
                 document.getElementById('edit-nome-funcionario').value = funcionarioEditando.nome;
+                document.getElementById('edit-matricula-funcionario').value = funcionarioEditando.matricula || '';
                 document.getElementById('edit-funcao-funcionario').value = funcionarioEditando.funcao;
                 
                 const preview = document.getElementById('edit-preview-funcionario');
@@ -2084,15 +2101,23 @@
             if (!funcionarioEditando) return;
 
             const nome = document.getElementById('edit-nome-funcionario').value.trim();
+            const matricula = document.getElementById('edit-matricula-funcionario').value.trim();
             const funcao = document.getElementById('edit-funcao-funcionario').value.trim();
 
-            if (!nome || !funcao) {
+            if (!nome || !matricula || !funcao) {
                 mostrarNotificacao('Preencha todos os campos obrigatórios!', 'error');
+                return;
+            }
+
+            const matriculaDuplicada = funcionarios.some(func => func.matricula === matricula && func.id !== funcionarioEditando.id);
+            if (matriculaDuplicada) {
+                mostrarNotificacao('Já existe um funcionário cadastrado com essa matrícula!', 'error');
                 return;
             }
 
             // Atualizar dados do funcionário
             funcionarioEditando.nome = nome;
+            funcionarioEditando.matricula = matricula;
             funcionarioEditando.funcao = funcao;
 
             const fotoInput = document.getElementById('edit-foto-funcionario');
@@ -2267,6 +2292,7 @@
                     <thead>
                         <tr>
                             <th>Nome</th>
+                            <th>Matrícula</th>
                             <th>Função</th>
                             <th>Ações</th>
                         </tr>
@@ -2278,6 +2304,7 @@
                 html += `
                     <tr>
                         <td>${func.nome} ${func.temDigital ? '<span class="biometric-badge"><i class="fas fa-fingerprint"></i> Digital</span>' : ''}</td>
+                        <td>${func.matricula || ''}</td>
                         <td>${func.funcao}</td>
                         <td class="action-buttons">
                             <button class="action-btn edit-btn" onclick="editarFuncionario(${func.id})"><i class="fas fa-edit"></i></button>
@@ -2296,6 +2323,7 @@
             const termo = document.getElementById('search-funcionarios').value.toLowerCase();
             const funcionariosFiltrados = funcionarios.filter(func => 
                 func.nome.toLowerCase().includes(termo) ||
+                (func.matricula || '').toLowerCase().includes(termo) ||
                 func.funcao.toLowerCase().includes(termo)
             );
             exibirFuncionarios(funcionariosFiltrados);
